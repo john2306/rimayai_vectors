@@ -43,7 +43,7 @@ fi
 
 # 4. Detener contenedores previos
 echo -e "${YELLOW}🛑 Deteniendo contenedores previos...${NC}"
-docker-compose down 2>/dev/null || true
+docker compose down 2>/dev/null || true
 
 # 5. Limpiar recursos
 echo -e "${YELLOW}🧹 Limpiando recursos...${NC}"
@@ -53,11 +53,11 @@ echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
 
 # 6. Build de la imagen
 echo -e "${YELLOW}🏗️ Construyendo imagen Docker...${NC}"
-docker-compose build --no-cache
+docker compose build --no-cache
 
 # 7. Iniciar servicio
 echo -e "${YELLOW}🚀 Iniciando servicio...${NC}"
-docker-compose up -d
+docker compose up -d
 
 # 8. Esperar a que el servicio esté listo
 echo -e "${YELLOW}⏳ Esperando a que el servicio esté listo...${NC}"
@@ -65,8 +65,8 @@ sleep 10
 
 # 9. Verificar estado
 echo -e "${YELLOW}📊 Verificando estado del servicio...${NC}"
-docker-compose ps
-docker-compose logs --tail=50
+docker compose ps
+docker compose logs --tail=50
 
 # 10. Test de salud
 echo -e "${YELLOW}🏥 Test de salud...${NC}"
@@ -75,7 +75,7 @@ if curl -f http://localhost:8000/docs &> /dev/null; then
     echo -e "${GREEN}📖 Documentación: http://$(hostname -I | awk '{print $1}'):8000/docs${NC}"
 else
     echo "❌ Servicio no responde. Revisa los logs:"
-    docker-compose logs
+    docker compose logs
 fi
 
 # 11. Mostrar stats
@@ -91,8 +91,8 @@ echo "🎉 Deployment completado!"
 echo "=========================================================="
 echo ""
 echo "Comandos útiles:"
-echo "  Ver logs:     docker-compose logs -f"
-echo "  Reiniciar:    docker-compose restart"
-echo "  Detener:      docker-compose down"
+echo "  Ver logs:     docker compose logs -f"
+echo "  Reiniciar:    docker compose restart"
+echo "  Detener:      docker compose down"
 echo "  Stats GPU:    tegrastats"
 echo -e "${NC}"

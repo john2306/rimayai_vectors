@@ -53,13 +53,13 @@ sudo ./optimize_jetson.sh
 ./deploy.sh
 
 # Opción B: Manual con docker-compose
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ### 3. Verificar
 ```bash
 # Ver logs
-docker-compose logs -f
+docker compose logs -f
 
 # Health check
 curl http://localhost:8000/health

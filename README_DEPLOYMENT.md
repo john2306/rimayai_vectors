@@ -39,21 +39,21 @@ sudo ./optimize_jetson.sh
 
 ```bash
 # Build y start
-docker-compose up -d --build
+docker compose up -d --build
 
 # Ver logs
-docker-compose logs -f
+docker compose logs -f
 
 # Reiniciar
-docker-compose restart
+docker compose restart
 
 # Detener
-docker-compose down
+docker compose down
 
 # Rebuild completo
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+docker compose down
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ## 📊 Benchmark
