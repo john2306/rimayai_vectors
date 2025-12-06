@@ -1,24 +1,48 @@
-# Dockerfile
+# Dockerfile optimizado para Jetson Orin Nano con Ubuntu 22.04 y Python 3.10
 
-# Usar una imagen base de NVIDIA optimizada para Jetson (L4T) con PyTorch y CUDA
-# Asegúrate de que esta imagen base coincida con tu versión de JetPack/CUDA (ej. 36.x y CUDA 12.x)
-# Usaremos una imagen base general que debería funcionar con CUDA 12.x
-FROM nvcr.io/nvidia/pytorch:23.10-py3
+# Usar imagen base L4T para Jetson con PyTorch preinstalado
+# Esta imagen está optimizada para Jetson Orin con soporte CUDA nativo
+FROM nvcr.io/nvidia/l4t-pytorch:r36.4.0-pth2.5-py3
+
+# Variables de entorno para optimización
+ENV PYTHONUNBUFFERED=1 \
+    PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128 \
+    CUDA_LAUNCH_BLOCKING=0 \
+    TORCH_CUDNN_V8_API_ENABLED=1 \
+    TRANSFORMERS_CACHE=/app/.cache/huggingface \
+    HF_HOME=/app/.cache/huggingface
 
 # Establecer el directorio de trabajo
 WORKDIR /app
 
-# Copiar los archivos de la aplicación
+# Copiar requirements primero (cache layer)
+COPY ./app/requirements.txt /app/requirements.txt
+
+# Instalar dependencias del sistema y Python
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libopenblas-dev \
+    libjpeg-dev \
+    libpng-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt
+
+# Copiar código de la aplicación
 COPY ./app /app
 
-# Instalar las dependencias de Python
-# Nota: La imagen base de NVIDIA ya tiene torch con CUDA. 
-# Solo necesitamos instalar las otras dependencias.
-RUN pip install --no-cache-dir -r requirements.txt
+# Crear directorio para caché de modelos
+RUN mkdir -p /app/.cache/huggingface
+
+# Pre-descargar el modelo CLIP (opcional, para builds más rápidas)
+# RUN python -c "from transformers import CLIPModel, CLIPProcessor; CLIPModel.from_pretrained('openai/clip-vit-base-patch32'); CLIPProcessor.from_pretrained('openai/clip-vit-base-patch32')"
 
 # Exponer el puerto de FastAPI
 EXPOSE 8000
 
-# Comando para correr la aplicación con Uvicorn
-# La opción --host 0.0.0.0 es necesaria para que Docker sea accesible externamente
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/docs')" || exit 1
+
+# Comando optimizado para producción con workers y configuración para GPU
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--loop", "uvloop"]

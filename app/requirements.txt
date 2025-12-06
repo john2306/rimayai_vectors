@@ -1,6 +1,7 @@
-fastapi
-uvicorn
-pydantic
-torch
-Pillow
-transformers
+fastapi==0.123.10
+uvicorn[standard]==0.38.0
+uvloop==0.21.0
+pydantic==2.12.5
+Pillow==12.0.0
+transformers==4.57.3
+accelerate==1.3.0

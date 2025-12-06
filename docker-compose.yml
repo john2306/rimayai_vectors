@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  vectorizer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rimayai_vectorizer
+    restart: unless-stopped
+    
+    # Configuración de GPU para Jetson
+    runtime: nvidia
+    
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
+      - CUDA_LAUNCH_BLOCKING=0
+    
+    ports:
+      - "8000:8000"
+    
+    volumes:
+      # Cache de modelos persistente
+      - huggingface_cache:/app/.cache/huggingface
+    
+    # Limitar recursos (ajustar según necesidad)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+        limits:
+          memory: 6G
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  huggingface_cache:
+    driver: local
