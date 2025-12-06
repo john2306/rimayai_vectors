@@ -1,8 +1,8 @@
 # Dockerfile optimizado para Jetson Orin Nano con Ubuntu 22.04 y Python 3.10
 
-# Usar imagen base L4T para Jetson con PyTorch preinstalado
-# Esta imagen está optimizada para Jetson Orin con soporte CUDA nativo
-FROM nvcr.io/nvidia/l4t-pytorch:r36.4.0-pth2.5-py3
+# Usar imagen base L4T sin PyTorch (más estable y confiable)
+# R36.4 (JetPack 6.x)
+FROM nvcr.io/nvidia/l4t-base:r36.4.0
 
 # Variables de entorno para optimización
 ENV PYTHONUNBUFFERED=1 \
@@ -20,13 +20,25 @@ COPY ./app/requirements.txt /app/requirements.txt
 
 # Instalar dependencias del sistema y Python
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-pip \
+    python3-dev \
     build-essential \
     libopenblas-dev \
     libjpeg-dev \
     libpng-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir -r requirements.txt
+    git \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Actualizar pip
+RUN python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# Instalar PyTorch para Jetson (desde NVIDIA)
+RUN pip3 install --no-cache-dir \
+    https://developer.download.nvidia.com/compute/redist/jp/v61/pytorch/torch-2.4.0-cp310-cp310-linux_aarch64.whl
+
+# Instalar dependencias de la aplicación
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copiar código de la aplicación
 COPY ./app /app
